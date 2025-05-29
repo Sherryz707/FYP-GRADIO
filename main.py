@@ -3,6 +3,12 @@ from fastapi.responses import JSONResponse
 from fastai.vision.all import *  # Import all necessary FastAI components
 from PIL import Image
 import io
+from pathlib import Path
+import pathlib
+import sys
+
+temp = pathlib.PosixPath
+pathlib.WindowsPath = pathlib.PosixPath
 
 app = FastAPI()
 
