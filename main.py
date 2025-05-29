@@ -1,13 +1,18 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
-from fastai.learner import load_learner
+from fastai.vision.all import *  # Import all necessary FastAI components
 from PIL import Image
 import io
 
 app = FastAPI()
 
 # Load model
-learn = load_learner('./model.pkl')
+try:
+    learn = load_learner('model.pkl', cpu=True)  # Load on CPU to avoid CUDA issues
+    print("Model loaded successfully:", learn.dls.vocab)
+except Exception as e:
+    print(f"Error loading model: {e}")
+    raise
 
 @app.get("/")
 def read_root():
@@ -18,13 +23,13 @@ async def predict(file: UploadFile = File(...)):
     # Read the uploaded file
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
-    image = image.resize((224, 224))
+    image = image.resize((224, 224))  # Match training preprocessing
 
     # Predict using FastAI model
-    pred = learn.predict(image)
+    pred, pred_idx, probs = learn.predict(image)
 
     # Return prediction
     return JSONResponse({
-        "prediction": pred[0],
-        "probabilities": [float(p) for p in pred[2]]
+        "prediction": str(pred),  # Convert to string for JSON serialization
+        "probabilities": [float(p) for p in probs]
     })
