@@ -1,4 +1,5 @@
+fastai==2.7.9
+fastcore==1.5.27
 fastapi
 uvicorn
-fastai
 pillow
