@@ -4,6 +4,7 @@ torchvision==0.14.1
 fastcore==1.5.27
 fastdownload==0.0.7
 fastprogress==1.0.3
+numpy<2
 pillow
 fastapi
 uvicorn
