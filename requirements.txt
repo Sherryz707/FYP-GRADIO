@@ -1,7 +1,10 @@
-fastapi
-uvicorn
+gradio
 fastai==2.7.18
 torch==2.5.1
 torchvision==0.20.1
 pillow==11.0.0
 python-multipart
+timm
+
+
+

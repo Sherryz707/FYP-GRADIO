@@ -1,41 +1,45 @@
-from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import JSONResponse
-from fastai.vision.all import *  # Import all necessary FastAI components
+from fastai.vision.all import load_learner
 from PIL import Image
-import io
-from pathlib import Path
-import pathlib
-import sys
+import gradio as gr
 
-temp = pathlib.PosixPath
-pathlib.WindowsPath = pathlib.PosixPath
+# Load both models
+alphabet_model = load_learner('alphabets.pkl', cpu=True)
+digit_model = load_learner('digits.pkl', cpu=True)
 
-app = FastAPI()
+# Predict functions
+def predict_alphabet(image):
+    image = image.resize((224, 224))
+    pred, pred_idx, probs = alphabet_model.predict(image)
+    return {str(alphabet_model.dls.vocab[i]): float(probs[i]) for i in range(len(probs))}
 
-# Load model
-try:
-    learn = load_learner('model.pkl', cpu=True)  # Load on CPU to avoid CUDA issues
-    print("Model loaded successfully:", learn.dls.vocab)
-except Exception as e:
-    print(f"Error loading model: {e}")
-    raise
+def predict_digit(image):
+    image = image.resize((224, 224))
+    pred, pred_idx, probs = digit_model.predict(image)
+    return {str(digit_model.dls.vocab[i]): float(probs[i]) for i in range(len(probs))}
 
-@app.get("/")
-def read_root():
-    return {"message": "Gesture recognition API is running."}
+# Define two interfaces
+alphabet_interface = gr.Interface(
+    fn=predict_alphabet,
+    inputs=gr.Image(type="pil"),
+    outputs=gr.Label(num_top_classes=3),
+    title="Alphabet Sign Recognition",
+    description="Upload an image to predict its alphabet sign."
+)
 
-@app.post("/predict/")
-async def predict(file: UploadFile = File(...)):
-    # Read the uploaded file
-    contents = await file.read()
-    image = Image.open(io.BytesIO(contents)).convert("RGB")
-    image = image.resize((224, 224))  # Match training preprocessing
+digit_interface = gr.Interface(
+    fn=predict_digit,
+    inputs=gr.Image(type="pil"),
+    outputs=gr.Label(num_top_classes=3),
+    title="Digit Sign Recognition",
+    description="Upload an image to predict its digit sign."
+)
 
-    # Predict using FastAI model
-    pred, pred_idx, probs = learn.predict(image)
+# Combine in tabs
+demo = gr.TabbedInterface(
+    interface_list=[alphabet_interface, digit_interface],
+    tab_names=["Alphabets", "Digits"]
+)
 
-    # Return prediction
-    return JSONResponse({
-        "prediction": str(pred),  # Convert to string for JSON serialization
-        "probabilities": [float(p) for p in probs]
-    })
+# Run locally
+if __name__ == "__main__":
+    demo.launch()
