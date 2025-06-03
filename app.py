@@ -1,6 +1,11 @@
 from fastai.vision.all import load_learner
 from PIL import Image
 import gradio as gr
+from pathlib import Path
+import pathlib
+
+temp = pathlib.PosixPath
+pathlib.WindowsPath = pathlib.PosixPath
 
 # Load both models
 alphabet_model = load_learner('alphabets.pkl', cpu=True)
